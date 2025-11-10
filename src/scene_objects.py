@@ -1,5 +1,4 @@
 import math
-import numpy as np
 
 from src.vector import Vector, dot
 
@@ -77,41 +76,6 @@ class Sphere(SceneObject):
         if t2_checked is None:
             return t1_checked
         return min(t1_checked, t2_checked)
-
-    def intersect_rays(
-        self, P: np.ndarray, V: np.ndarray, t_min: float, t_max: float
-    ) -> np.ndarray:
-        """Multiple rays for parallelism."""
-
-        # create arrays for sphere parameters
-        S = np.array([self.center.x, self.center.y, self.center.z])[:, np.newaxis]
-        R = np.array([self.radius])[:, np.newaxis]
-
-        A = (V**2).sum(axis=0)
-        B = ((P - S) * V).sum(axis=0)
-        C = (P - S) ** 2 - R**2
-
-        Dbig = B**2 - 4 * A * C
-
-        sqrtDbig = np.sqrt(Dbig)
-
-        T1 = (-B + sqrtDbig) / (2 * A)
-        T2 = (-B - sqrtDbig) / (2 * A)
-        T = np.stack([T1, T2], axis=0)
-        T_processed = np.where(np.abs(T) > 1e10, np.inf, T)
-        # entries will be nan if D < 0 and inf/really large if A = 0
-
-        # checks for each entry
-        valid_mask = ~(np.isnan(T_processed) | np.isinf(T_processed))
-        valid_mask &= (T_processed >= t_min) & (T_processed <= t_max)
-        T_masked = np.where(valid_mask, T_processed, np.inf)
-
-        # get smallest nad drop it if it is inf
-        result = np.min(T_masked, axis=1)
-        result = np.where(np.isinf(result), np.nan, result)
-
-        # result has a t-value or nan
-        return result
 
     def get_unit_normal_at_point(self, p: Vector) -> Vector:
         """
