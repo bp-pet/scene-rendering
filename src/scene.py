@@ -73,7 +73,7 @@ class Scene:
                 )
                 unit_normal = collided_object.get_unit_normal_at_point(collision_point)
 
-                total_illumination = 0
+                total_illumination = 0.0
                 for light_source in self.light_sources:
                     ray_to_light_source = light_source.position - collision_point
 
