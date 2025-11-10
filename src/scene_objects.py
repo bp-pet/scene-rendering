@@ -1,6 +1,7 @@
 import math
+import numpy as np
 
-from src.vector import Vector
+from src.vector import Vector, dot
 
 
 class SceneObject:
@@ -35,6 +36,8 @@ class Sphere(SceneObject):
 
         Derivation:
 
+        Let (x0, y0, z0) be the center of the sphere and r the radius.
+
         (p.x + t * v.x - x0) ** 2
         + (p.y + t * v.y - y0) ** 2
         + (p.z + t * v.z - z0) ** 2
@@ -44,16 +47,12 @@ class Sphere(SceneObject):
         + 2 * ((px - x0) * vx + (py - y0) * vy + (pz - z0) * vz) * t
         + (px - x0) ** 2  + (py - y0) ** 2 + (pz - z0) ** 2 - r ** 2
 
-        Use abc formula.
+        Use abc formula. Rewrite as vector operations.
         """
-        x0 = self.center.x
-        y0 = self.center.y
-        z0 = self.center.z
-        r = self.radius
 
-        a = v.x**2 + v.y**2 + v.z**2
-        b = 2 * ((p.x - x0) * v.x + (p.y - y0) * v.y + (p.z - z0) * v.z)
-        c = (p.x - x0) ** 2 + (p.y - y0) ** 2 + (p.z - z0) ** 2 - r**2
+        a = v.squared_magnitude()
+        b = 2 * dot(p - self.center, v)
+        c = (p - self.center).squared_magnitude() - self.radius**2
 
         if a == 0:
             return -c / b

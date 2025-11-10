@@ -24,12 +24,12 @@ if __name__ == "__main__":
         Sphere(
             center=Vector(0, 0, 0), radius=0.5, color=Vector(0, 255, 100)
         ),  # inside red ball
-        Sphere(center=Vector(0, 0, -1000), radius=990, color=Vector(0, 0, 255)),
+        Sphere(center=Vector(0, 0, -10000), radius=9990, color=Vector(0, 0, 255)),
     ]
 
     light_sources = [
-        LightSource(position=Vector(5, -2, 4))
-        # LightSource(position=Vector(2, 0, 0))
+        LightSource(position=Vector(5, -2, 4)),
+        LightSource(position=Vector(5, 1, 4)),
     ]
 
     scene = Scene(
