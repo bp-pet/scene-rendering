@@ -1,7 +1,7 @@
 from src.camera import Camera
 from src.light_source import LightSource
 from src.scene import Scene
-from src.scene_objects import Sphere
+from src.scene_objects import SceneObject, Sphere
 from src.vector import Vector
 
 
@@ -18,13 +18,23 @@ if __name__ == "__main__":
         window_distance=1,
     )
 
-    scene_objects = [
-        Sphere(center=Vector(0.9, -1.6, 1.9), radius=0.3, color=Vector(255, 0, 0)),
-        Sphere(center=Vector(-2, 0, 0.5), radius=3, color=Vector(0, 255, 0)),
+    scene_objects: list[SceneObject] = [
         Sphere(
-            center=Vector(0, 0, 0), radius=0.5, color=Vector(0, 255, 100)
+            center=Vector(3, -1.6, 1.9),
+            radius=0.3,
+            color=Vector(255, 0, 0),
+            roughness=1,
+        ),
+        Sphere(center=Vector(0, 0, 0), radius=3, color=Vector(0, 255, 0), roughness=0),
+        Sphere(
+            center=Vector(0, 0, 0), radius=0.5, color=Vector(0, 255, 100), roughness=1
         ),  # inside red ball
-        Sphere(center=Vector(0, 0, -10000), radius=9990, color=Vector(0, 0, 255)),
+        Sphere(
+            center=Vector(0, 0, -10000),
+            radius=9996,
+            color=Vector(0, 0, 255),
+            roughness=1,
+        ),
     ]
 
     light_sources = [

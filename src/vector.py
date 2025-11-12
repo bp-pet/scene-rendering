@@ -51,6 +51,18 @@ def cross(v1: Vector, v2: Vector) -> Vector:
     )
 
 
+def proj(source_vector: Vector, project_onto_vector: Vector) -> Vector:
+    return (
+        dot(source_vector, project_onto_vector)
+        / project_onto_vector.squared_magnitude()
+        * project_onto_vector
+    )
+
+
+def reflect_around(source_vector: Vector, reflect_around_vector: Vector) -> Vector:
+    return 2 * proj(source_vector, reflect_around_vector) - source_vector
+
+
 if __name__ == "__main__":
     """Basic tests"""
     u = Vector(1, 2, 3)
@@ -63,3 +75,7 @@ if __name__ == "__main__":
     print(u.unit().magnitude())
     print(v.unit().magnitude())
     print(dot(u.unit(), v.unit()))
+
+    w = Vector(1, 0, 0)
+    x = Vector(1, 1, 0)
+    print(reflect_around(w, x))

@@ -5,7 +5,7 @@ from src.constants import background_color
 from src.scene_objects import SceneObject
 from src.light_source import LightSource
 from src.simple_image import SimpleImage
-from src.vector import Vector, dot
+from src.vector import Vector, reflect_around
 
 
 class Scene:
@@ -18,6 +18,28 @@ class Scene:
         self.camera = camera
         self.scene_objects = scene_objects
         self.light_sources = light_sources
+
+    def send_ray(
+        self, p: Vector, v: Vector, t_min: float, t_max: float
+    ) -> tuple[float, int | None]:
+        """
+        Send a ray from point p in direction v and check for collision with any
+        objects between t_min and t_max. Pick closest point of collision. Return the
+        t of the collision and the index of the object.
+        """
+        # check collision with all objects
+        distances = []
+        for scene_object in self.scene_objects:
+            distances.append(scene_object.intersect_ray(p, v, t_min, t_max))
+
+        # find closest object
+        min_distance = math.inf
+        min_index = None
+        for ind, distance in enumerate(distances):
+            if distance is not None and distance < min_distance:
+                min_distance = distance
+                min_index = ind
+        return min_distance, min_index
 
     def capture(
         self, resolution_x: int, resolution_y: int, verbose: bool = False
@@ -37,42 +59,46 @@ class Scene:
                 print(f"Rendering row {i + 1} of {resolution_x}")
             row = []
             for j in range(resolution_y):
+                if not self.scene_objects:
+                    row.append(Vector(*background_color))
+                    continue
+
                 pixel_center = (
                     self.camera.top_left
                     - ((i + 0.5) * 2 * pixel_size_x * self.camera.up_unit)
                     + ((j + 0.5) * 2 * pixel_size_y * self.camera.right_unit)
                 )
+                starting_point = self.camera.eye_position
                 ray_direction = pixel_center - self.camera.eye_position
 
-                if not self.scene_objects:
-                    row.append(Vector(*background_color))
-                    continue
+                color = None
 
-                distances = []
-                for scene_object in self.scene_objects:
-                    distances.append(
-                        scene_object.intersect_ray(
-                            self.camera.eye_position, ray_direction, 1, math.inf
-                        )
+                for _ in range(10):  # TODO put in settings
+                    t, object_index = self.send_ray(
+                        self.camera.eye_position, ray_direction, 1, math.inf
                     )
 
-                min_distance = math.inf
-                min_index = None
-                for ind, distance in enumerate(distances):
-                    if distance is not None and distance < min_distance:
-                        min_distance = distance
-                        min_index = ind
+                    if object_index is None:
+                        color = Vector(*background_color)
+                        break
 
-                if min_index is None:
-                    row.append(Vector(*background_color))
-                    continue
+                    collided_object = self.scene_objects[object_index]
 
-                collided_object = self.scene_objects[min_index]
-                collision_point = (
-                    self.camera.eye_position + min_distance * ray_direction
-                )
-                unit_normal = collided_object.get_unit_normal_at_point(collision_point)
+                    # very simple setup to test reflection
+                    if collided_object.roughness == 1:
+                        color = collided_object.color
+                        break
+                    else:
+                        starting_point = starting_point + t * ray_direction
+                        unit_normal = collided_object.get_unit_normal_at_point(
+                            starting_point
+                        )
+                        ray_direction = reflect_around(-ray_direction, unit_normal)
 
-                row.append(collided_object.color)
+                if color is None:
+                    color = Vector(*background_color)
+
+                row.append(color)
+
             pixels.append(row)
         return SimpleImage(pixels)

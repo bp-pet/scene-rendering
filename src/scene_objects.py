@@ -4,8 +4,9 @@ from src.vector import Vector, dot
 
 
 class SceneObject:
-    def __init__(self, color=Vector):
+    def __init__(self, color: Vector, roughness: float):
         self.color = color
+        self.roughness = roughness
 
     def intersect_ray(
         self, p: Vector, v: Vector, t_min: float, t_max: float
@@ -17,10 +18,12 @@ class SceneObject:
 
 
 class Sphere(SceneObject):
-    def __init__(self, center: Vector, radius: float, color=Vector):
+    def __init__(self, center: Vector, radius: float, color: Vector, roughness: float):
         self.center = center
         self.radius = radius
         self.color = color
+        assert 0 <= roughness <= 1, "Roughness must be between 0 and 1"
+        self.roughness = roughness
 
     def __str__(self):
         return f"Sphere with center {self.center}, radius {self.radius}, color {self.color}"
