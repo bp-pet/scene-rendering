@@ -85,7 +85,7 @@ class Sphere(SceneObject):
         result = np.min(T_masked, axis=0)  # n
         assert result.shape == (n,)
 
-        # result has a t-value or nan
+        # result has a t-value either in the asked interval or inf
         return result
 
     def get_unit_normal_at_point(self, p: np.ndarray) -> np.ndarray:  # 3; 3

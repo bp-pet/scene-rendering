@@ -24,7 +24,9 @@ class Scene:
         """
         Capture the scene with a given resolution.
 
-        x is top to bottom, y is left to right.
+        x is the number of pixels top to bottom.
+        y is the number of pixels left to right.
+        b is the number of objects
 
         Camera ray given by p + t * v or P + t * V in matrix form.
         """
@@ -85,6 +87,7 @@ class Scene:
 
         # Get the closest object (index) for each pixel
         collision_object_indices = np.argmin(distances, axis=0)  # x by y
+        collision_distances = np.min(distances, axis=0)  # x by y
         mask = np.any(distances < np.inf, axis=0)  # pixels that have a collision at all
         collision_object_indices = np.where(
             mask, collision_object_indices, -1
@@ -94,22 +97,24 @@ class Scene:
 
         pixels = object_colors[collision_object_indices, :]
 
+        t = collision_distances.reshape(1, -1)  # 1 by x*y
+        collision_points_unfolded = P + t * V
+        collision_points = collision_points_unfolded.reshape(
+            3, resolution_x, resolution_y
+        )  # 3 by x by y
+
         # TODO this part has to be rewritten with numpy
         # total_illumination = 0.0
-        # for light_source in self.light_sources:
-        #     ray_to_light_source = light_source.position - collision_point
+        for light_source in self.light_sources:
+            rays_to_light_source = (
+                light_source.position - collision_points
+            )  # 3 by x by y
 
-        #     # check for shadow
-        #     # in_shadow = False
-        #     # for scene_object in self.scene_objects:
-        #     #     if scene_object == collided_object:
-        #     #         continue
-        #     #     shadow_distance = scene_object.intersect_ray(
-        #     #         collision_point, ray_to_light_source, 0, 1
-        #     #     )
-        #     #     if shadow_distance is not None:
-        #     #         in_shadow = True
-        #     #         break
+            # check for shadow
+            for scene_object in self.scene_objects:
+                shadow_distance = scene_object.intersect_rays(
+                    collision_points, rays_to_light_source, 0, 1
+                )
 
         #     total_illumination += (
         #         max(0, dot(unit_normal, ray_to_light_source.unit()))
