@@ -10,6 +10,7 @@ class SimpleImage:
         self.pixels = pixels
 
     def get_pmm(self) -> str:
+        print("Starting image writing")
         result = f"P3\n{self.pixels.shape[0]} {self.pixels.shape[1]}\n255\n"
         for i in range(self.pixels.shape[0]):
             for j in range(self.pixels.shape[1]):

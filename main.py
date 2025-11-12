@@ -20,18 +20,18 @@ if __name__ == "__main__":
     )
 
     scene_objects: list[SceneObject] = [
-        # Sphere(
-        #     center=np.array((0.9, -1.6, 1.9)),
-        #     radius=0.3,
-        #     color=np.array((255, 0, 0)),
-        # ),
+        Sphere(
+            center=np.array((0.9, -1.6, 1.9)),
+            radius=0.3,
+            color=np.array((255, 0, 0)),
+        ),
         Sphere(center=np.array((-2, 0, 0.5)), radius=3, color=np.array((0, 255, 0))),
-        # Sphere(
-        #     center=np.array((0, 0, 0)), radius=0.5, color=np.array((0, 255, 100))
-        # ),  # inside red ball
-        # Sphere(
-        #     center=np.array((0, 0, -10000)), radius=9990, color=np.array((0, 0, 255))
-        # ),
+        Sphere(
+            center=np.array((0, 0, 0)), radius=0.5, color=np.array((0, 255, 100))
+        ),  # inside red ball
+        Sphere(
+            center=np.array((0, 0, -10000)), radius=9990, color=np.array((0, 0, 255))
+        ),
     ]
 
     light_sources = [

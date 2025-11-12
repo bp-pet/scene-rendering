@@ -39,8 +39,6 @@ class Scene:
         pixel_size_x = self.camera.window_size_x / resolution_x
         pixel_size_y = self.camera.window_size_y / resolution_y
 
-        print("starting pixel centers calculation")
-
         down_units_range = (np.arange(resolution_x) + 0.5) * 2 * pixel_size_x
         right_units_range = (np.arange(resolution_y) + 0.5) * 2 * pixel_size_y
         pixel_centers = (
@@ -50,8 +48,6 @@ class Scene:
             + right_units_range[np.newaxis, np.newaxis, :]
             * self.camera.right_unit[:, np.newaxis, np.newaxis]
         )  # 3 by x by y
-
-        print("starting P and V calculation")
 
         V = (
             pixel_centers.reshape(3, -1) - self.camera.eye_position[:, np.newaxis]
@@ -68,37 +64,34 @@ class Scene:
             shape=(len(self.scene_objects), resolution_x, resolution_y)
         )  # b by x by y
 
-        print("starting intersections")
-
+        # Calculate intersection with each object
+        object_colors = np.zeros((len(self.scene_objects) + 1, 3))  # b+1 by 3
         for obj_index, scene_object in enumerate(self.scene_objects):
-            intersections_unfolded = scene_object.intersect_rays(
+            t_values_per_pixel_unfolded = scene_object.intersect_rays(
                 P, V, 1, np.inf
             )  # x * y
-            intersections = intersections_unfolded.reshape(
+            t_values_per_pixel = t_values_per_pixel_unfolded.reshape(
                 resolution_x, resolution_y
             )  # x by y
-            distances[obj_index, :, :] = intersections
+            distances[obj_index, :, :] = t_values_per_pixel  # b by x by y
 
+            object_colors[obj_index, :] = scene_object.color
+
+        object_colors[-1, :] = np.array(
+            background_color
+        )  # set the default as last element
+
+        # Get the closest object for each pixel
         collision_object_indices = np.argmin(distances, axis=0)  # x by y
-        # taking the argmin will always find something so need to check if its
-        # an actual collision
+        mask = np.any(distances < np.inf, axis=0)
         collision_object_indices = np.where(
-            intersections < np.inf, collision_object_indices, -1
-        )
+            mask, collision_object_indices, -1
+        )  # x by y
+        # 2d array with elements corresponding to indices of objects
         assert collision_object_indices.shape == (resolution_x, resolution_y)
 
-        print("starting color writing")
-
         # TODO rewrite without loops
-        pixels = np.zeros((resolution_x, resolution_y, 3))
-        for i in range(resolution_x):
-            for j in range(resolution_y):
-                obj_idx = collision_object_indices[i, j]
-                pixels[i, j, :] = (
-                    self.scene_objects[obj_idx].color
-                    if obj_idx >= 0
-                    else np.array(background_color)
-                )
+        pixels = object_colors[collision_object_indices, :]
 
         # total_illumination = 0.0
         # for light_source in self.light_sources:
