@@ -39,15 +39,19 @@ class Scene:
         pixel_size_x = self.camera.window_size_x / resolution_x
         pixel_size_y = self.camera.window_size_y / resolution_y
 
-        pixel_centers = np.zeros((3, resolution_x, resolution_y))  # 3 by x by y
-        # TODO write without loops
-        for i in range(resolution_x):
-            for j in range(resolution_y):
-                pixel_centers[:, i, j] = (
-                    self.camera.top_left
-                    - ((i + 0.5) * 2 * pixel_size_x * self.camera.up_unit)
-                    + ((j + 0.5) * 2 * pixel_size_y * self.camera.right_unit)
-                )
+        print("starting pixel centers calculation")
+
+        down_units_range = (np.arange(resolution_x) + 0.5) * 2 * pixel_size_x
+        right_units_range = (np.arange(resolution_y) + 0.5) * 2 * pixel_size_y
+        pixel_centers = (
+            self.camera.top_left[:, np.newaxis, np.newaxis]
+            - down_units_range[np.newaxis, :, np.newaxis]
+            * self.camera.up_unit[:, np.newaxis, np.newaxis]
+            + right_units_range[np.newaxis, np.newaxis, :]
+            * self.camera.right_unit[:, np.newaxis, np.newaxis]
+        )  # 3 by x by y
+
+        print("starting P and V calculation")
 
         V = (
             pixel_centers.reshape(3, -1) - self.camera.eye_position[:, np.newaxis]
@@ -63,6 +67,8 @@ class Scene:
         distances = np.zeros(
             shape=(len(self.scene_objects), resolution_x, resolution_y)
         )  # b by x by y
+
+        print("starting intersections")
 
         for obj_index, scene_object in enumerate(self.scene_objects):
             intersections_unfolded = scene_object.intersect_rays(
@@ -80,6 +86,8 @@ class Scene:
             intersections < np.inf, collision_object_indices, -1
         )
         assert collision_object_indices.shape == (resolution_x, resolution_y)
+
+        print("starting color writing")
 
         # TODO rewrite without loops
         pixels = np.zeros((resolution_x, resolution_y, 3))
