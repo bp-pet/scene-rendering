@@ -48,7 +48,7 @@ if __name__ == "__main__":
         camera=camera, scene_objects=scene_objects, light_sources=light_sources
     )
 
-    pmm = scene.capture(999, 999, verbose=True).get_pmm()
+    pmm = scene.capture(300, 300, verbose=True).get_pmm()
 
     with open("output/output.pmm", "w") as f:
         f.write(pmm)

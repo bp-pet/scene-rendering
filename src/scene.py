@@ -7,10 +7,14 @@ from src.constants import (
     TOLERANCE,
     DEFAULT_COLOR_MIXING_METHOD,
     NUMERICAL_FIX_COLLISION_POINT,
+    USE_ANTIALIASING,
+    SAMPLES_PER_PIXEL,
+    FILTER_RADIUS,
 )
 from src.scene_objects import SceneObject
 from src.light_source import LightSource
 from src.simple_image import SimpleImage
+from src.utils import get_random_point_on_unit_disk
 from src.vector import (
     Vector,
     reflect_around,
@@ -100,6 +104,41 @@ class Scene:
 
         return result
 
+    def get_ray_color(self, starting_point: Vector, ray_direction: Vector) -> Vector:
+        observed_colors: list[Vector] = []
+
+        for _ in range(MAX_NUMBER_OF_BOUNCES):  # TODO put in settings
+            # find next collision
+            t, object_index = self.send_ray(
+                starting_point, ray_direction, TOLERANCE, math.inf
+            )  # TODO for the first ray t_min should be 1, otherwise collision may be inside camera
+
+            # add color to list
+            if object_index is None:
+                # no collision, end tracing
+                observed_colors.append(Vector(*BACKGROUND_COLOR))
+                break
+            collided_object = self.scene_objects[object_index]
+            observed_colors.append(collided_object.color)
+
+            # calculate next starting point
+            collision_point = starting_point + t * ray_direction
+            unit_normal = collided_object.get_unit_normal_at_point(collision_point)
+            if NUMERICAL_FIX_COLLISION_POINT:
+                # make sure starting point of next ray is outside object
+                starting_point = collision_point + TOLERANCE * unit_normal
+            else:
+                starting_point = collision_point
+
+            # calculate next direction
+            clean_bounce = reflect_around(-ray_direction, unit_normal)
+            random_bounce = random_vector_in_hemisphere(unit_normal)
+            ray_direction = linear_interpolation(
+                clean_bounce, random_bounce, collided_object.roughness
+            )
+
+        return self.calculate_color(observed_colors)
+
     def capture(
         self, resolution_x: int, resolution_y: int, verbose: bool = False
     ) -> SimpleImage:
@@ -127,45 +166,41 @@ class Scene:
                     - ((i + 0.5) * 2 * pixel_size_x * self.camera.up_unit)
                     + ((j + 0.5) * 2 * pixel_size_y * self.camera.right_unit)
                 )
-                starting_point = self.camera.eye_position
-                ray_direction = pixel_center - self.camera.eye_position
 
-                observed_colors: list[Vector] = []
+                if USE_ANTIALIASING:
+                    samples: list[Vector] = []
+                    for _ in range(SAMPLES_PER_PIXEL):
+                        starting_point = self.camera.eye_position
 
-                for _ in range(MAX_NUMBER_OF_BOUNCES):  # TODO put in settings
-                    # find next collision
-                    t, object_index = self.send_ray(
-                        starting_point, ray_direction, TOLERANCE, math.inf
-                    )  # TODO for the first ray t_min should be 1, otherwise collision may be inside camera
+                        offset_value = get_random_point_on_unit_disk()
+                        offset_position = (
+                            pixel_center
+                            + offset_value[0]
+                            * FILTER_RADIUS
+                            * pixel_size_x
+                            * self.camera.up_unit
+                            + offset_value[1]
+                            * FILTER_RADIUS
+                            * pixel_size_y
+                            * self.camera.right_unit
+                        )
 
-                    # add color to list
-                    if object_index is None:
-                        # no collision, end tracing
-                        observed_colors.append(Vector(*BACKGROUND_COLOR))
-                        break
-                    collided_object = self.scene_objects[object_index]
-                    observed_colors.append(collided_object.color)
+                        ray_direction = offset_position - self.camera.eye_position
+                        samples.append(
+                            self.get_ray_color(starting_point, ray_direction)
+                        )
 
-                    # calculate next starting point
-                    collision_point = starting_point + t * ray_direction
-                    unit_normal = collided_object.get_unit_normal_at_point(
-                        collision_point
-                    )
-                    if NUMERICAL_FIX_COLLISION_POINT:
-                        # make sure starting point of next ray is outside object
-                        starting_point = collision_point + TOLERANCE * unit_normal
-                    else:
-                        starting_point = collision_point
+                    # get average
+                    pixel_color = Vector(0, 0, 0)
+                    for sample in samples:
+                        pixel_color += sample
+                    pixel_color = pixel_color * (1 / len(samples))
 
-                    # calculate next direction
-                    clean_bounce = reflect_around(-ray_direction, unit_normal)
-                    random_bounce = random_vector_in_hemisphere(unit_normal)
-                    ray_direction = linear_interpolation(
-                        clean_bounce, random_bounce, collided_object.roughness
-                    )
+                else:
+                    starting_point = self.camera.eye_position
+                    ray_direction = pixel_center - self.camera.eye_position
+                    pixel_color = self.get_ray_color(starting_point, ray_direction)
 
-                # calculate color
-                pixel_color = self.calculate_color(observed_colors)
                 row.append(pixel_color)
 
             pixels.append(row)
