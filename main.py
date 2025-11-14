@@ -20,18 +20,18 @@ if __name__ == "__main__":
 
     scene_objects: list[SceneObject] = [
         Sphere(
-            center=Vector(3, -1.6, 1.9),
-            radius=0.3,
+            center=Vector(0, 2, 0),
+            radius=1,
             color=Vector(255, 0, 0),
             roughness=1,
         ),
-        Sphere(center=Vector(0, 0, 0), radius=3, color=Vector(0, 255, 0), roughness=0),
+        Sphere(center=Vector(0, 0, 0), radius=1, color=Vector(0, 255, 0), roughness=0),
         Sphere(
-            center=Vector(0, 0, 0), radius=0.5, color=Vector(0, 255, 100), roughness=1
-        ),  # inside red ball
+            center=Vector(0, -2, 0), radius=1, color=Vector(0, 255, 100), roughness=1
+        ),
         Sphere(
             center=Vector(0, 0, -10000),
-            radius=9996,
+            radius=9999,
             color=Vector(0, 0, 255),
             roughness=1,
         ),
@@ -46,7 +46,7 @@ if __name__ == "__main__":
         camera=camera, scene_objects=scene_objects, light_sources=light_sources
     )
 
-    pmm = scene.capture(1000, 1000, verbose=True).get_pmm()
+    pmm = scene.capture(99, 99, verbose=True).get_pmm()
 
     with open("output/output.pmm", "w") as f:
         f.write(pmm)

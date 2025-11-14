@@ -1,4 +1,5 @@
 import math
+import random
 from typing import Self
 
 
@@ -63,6 +64,29 @@ def reflect_around(source_vector: Vector, reflect_around_vector: Vector) -> Vect
     return 2 * proj(source_vector, reflect_around_vector) - source_vector
 
 
+def random_vector_in_hemisphere(normal: Vector) -> Vector:
+    """Pick random vectors uniformly in unit cube until one is found
+    that is in the unit sphere and poining in same direction (same hemisphere as)
+    the given vector."""
+    while True:
+        x = random.random() * 2 - 1
+        y = random.random() * 2 - 1
+        z = random.random() * 2 - 1
+        candidate = Vector(x, y, z)
+        magnitude = candidate.magnitude()
+        if magnitude > 1:
+            continue
+        if dot(candidate, normal) < 0:
+            continue
+        return candidate
+
+
+def linear_interpolation(v1: Vector, v2: Vector, k: float) -> Vector:
+    """If k = 0 return v1, if k = 1 return v2, linearly interpolate inbetween."""
+    assert 0 <= k <= 1
+    return v1 * (1 - k) + v2 * k
+
+
 if __name__ == "__main__":
     """Basic tests"""
     u = Vector(1, 2, 3)
@@ -79,3 +103,6 @@ if __name__ == "__main__":
     w = Vector(1, 0, 0)
     x = Vector(1, 1, 0)
     print(reflect_around(w, x))
+
+    r = random_vector_in_hemisphere(Vector(0, 0, 1))
+    print(r)
